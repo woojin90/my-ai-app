@@ -1,10 +1,22 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { ratelimit } from "@/lib/ratelimit";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const { success, reset } = await ratelimit.limit(ip);
+
+    if (!success) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+      return NextResponse.json(
+        { error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
+        { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
+      );
+    }
+
     const { messages } = await req.json();
 
     if (!Array.isArray(messages) || messages.length === 0) {

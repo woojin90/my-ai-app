@@ -34,14 +34,40 @@ export default function Home() {
         body: JSON.stringify({ messages: nextMessages }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error ?? "알 수 없는 오류가 발생했습니다.");
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "알 수 없는 오류가 발생했습니다.");
         return;
       }
 
-      setMessages([...nextMessages, { role: "assistant", content: data.text }]);
+      if (!res.body) {
+        setError("응답을 받지 못했습니다.");
+        return;
+      }
+
+      // 스트리밍으로 글자가 채워질 빈 assistant 메시지를 먼저 추가해 둔다.
+      setMessages([...nextMessages, { role: "assistant", content: "" }]);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+
+        // 방금 추가한 마지막 assistant 메시지에 도착한 조각을 이어 붙인다.
+        setMessages((prev) => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          updated[updated.length - 1] = {
+            ...last,
+            content: last.content + chunk,
+          };
+          return updated;
+        });
+      }
     } catch {
       setError("네트워크 오류로 응답을 받지 못했습니다.");
     } finally {
@@ -69,32 +95,49 @@ export default function Home() {
             </p>
           )}
 
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${
-                message.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
+          {messages.map((message, index) => {
+            // 스트리밍이 막 시작돼 아직 글자가 도착하지 않은 빈 assistant
+            // 메시지는 말풍선 대신 아래의 "생각 중..." 표시로 대체한다.
+            if (message.role === "assistant" && message.content === "") {
+              return null;
+            }
+
+            return (
               <div
-                className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm ${
-                  message.role === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-zinc-100 text-zinc-900"
+                key={index}
+                className={`flex ${
+                  message.role === "user" ? "justify-end" : "justify-start"
                 }`}
               >
-                {message.content}
+                <div
+                  className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm ${
+                    message.role === "user"
+                      ? "bg-blue-600 text-white"
+                      : "bg-zinc-100 text-zinc-900"
+                  }`}
+                >
+                  {message.content}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="max-w-[80%] rounded-2xl bg-zinc-100 px-4 py-2 text-sm text-zinc-500">
-                생각 중...
-              </div>
-            </div>
-          )}
+          {isLoading &&
+            (() => {
+              const last = messages[messages.length - 1];
+              const waitingForFirstChunk =
+                !last || last.role !== "assistant" || last.content === "";
+
+              if (!waitingForFirstChunk) return null;
+
+              return (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] rounded-2xl bg-zinc-100 px-4 py-2 text-sm text-zinc-500">
+                    생각 중...
+                  </div>
+                </div>
+              );
+            })()}
         </div>
 
         {error && (

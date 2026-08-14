@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { ratelimit } from "@/lib/ratelimit";
+import { SYSTEM_PROMPT } from "@/lib/systemPrompt";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
         const anthropicStream = anthropic.messages.stream({
           model: "claude-opus-5",
           max_tokens: 2048,
+          system: SYSTEM_PROMPT,
           messages,
         });
 

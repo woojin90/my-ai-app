@@ -14,25 +14,25 @@ const CLOUDS = [
 ];
 
 const STARS = [
-  { left: "4%", size: 3, duration: 14, delay: -2 },
-  { left: "13%", size: 2, duration: 19, delay: -9 },
-  { left: "22%", size: 4, duration: 12, delay: -4 },
-  { left: "31%", size: 2, duration: 21, delay: -13 },
-  { left: "40%", size: 3, duration: 16, delay: -1 },
-  { left: "50%", size: 2, duration: 23, delay: -16 },
-  { left: "59%", size: 4, duration: 13, delay: -7 },
-  { left: "68%", size: 2, duration: 20, delay: -3 },
-  { left: "77%", size: 3, duration: 17, delay: -11 },
-  { left: "86%", size: 2, duration: 22, delay: -6 },
-  { left: "94%", size: 3, duration: 15, delay: -19 },
+  { left: "4%", size: 14, duration: 14, delay: -2 },
+  { left: "13%", size: 10, duration: 19, delay: -9 },
+  { left: "22%", size: 18, duration: 12, delay: -4 },
+  { left: "31%", size: 11, duration: 21, delay: -13 },
+  { left: "40%", size: 15, duration: 16, delay: -1 },
+  { left: "50%", size: 10, duration: 23, delay: -16 },
+  { left: "59%", size: 17, duration: 13, delay: -7 },
+  { left: "68%", size: 11, duration: 20, delay: -3 },
+  { left: "77%", size: 14, duration: 17, delay: -11 },
+  { left: "86%", size: 10, duration: 22, delay: -6 },
+  { left: "94%", size: 13, duration: 15, delay: -19 },
 ];
 
 function Cloud() {
   return (
-    <div className="relative h-full w-full opacity-70">
-      <div className="absolute inset-0 rounded-full bg-white blur-sm" />
-      <div className="absolute left-[18%] top-[-45%] h-[85%] w-[55%] rounded-full bg-white blur-sm" />
-      <div className="absolute left-[48%] top-[-28%] h-[70%] w-[45%] rounded-full bg-white blur-sm" />
+    <div className="relative h-full w-full opacity-90">
+      <div className="absolute inset-0 rounded-full bg-slate-300 blur-sm" />
+      <div className="absolute left-[18%] top-[-45%] h-[85%] w-[55%] rounded-full bg-slate-300 blur-sm" />
+      <div className="absolute left-[48%] top-[-28%] h-[70%] w-[45%] rounded-full bg-slate-300 blur-sm" />
     </div>
   );
 }
@@ -62,21 +62,22 @@ export default function AnimatedBackground() {
         ))}
       </div>
 
-      {/* 다크 모드: 떨어지는 별 */}
+      {/* 다크 모드: 떨어지는 노란 별 */}
       <div className="absolute inset-0 hidden dark:block">
         {STARS.map((star, i) => (
           <span
             key={i}
-            className="absolute top-[-5%] rounded-full bg-white"
+            className="absolute top-[-5%] leading-none text-yellow-300"
             style={{
               left: star.left,
-              width: star.size,
-              height: star.size,
-              boxShadow: "0 0 4px 1px rgba(255,255,255,0.8)",
+              fontSize: star.size,
+              textShadow: "0 0 6px rgba(250, 204, 21, 0.7)",
               animation: `fall-down ${star.duration}s linear infinite`,
               animationDelay: `${star.delay}s`,
             }}
-          />
+          >
+            ★
+          </span>
         ))}
       </div>
     </div>
